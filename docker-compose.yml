@@ -134,75 +134,75 @@ services:
     #   - loki
     network_mode: service:tailscale
     
-  gateway:
-    image: nginx:latest
-    # depends_on:
-    #   - read
-    #   - write
-    entrypoint:
-      - sh
-      - -euc
-      - |
-        cat <<EOF > /etc/nginx/nginx.conf
-        user  nginx;
-        worker_processes  5;  ## Default: 1
+  # gateway:
+  #   image: nginx:latest
+  #   # depends_on:
+  #   #   - read
+  #   #   - write
+  #   entrypoint:
+  #     - sh
+  #     - -euc
+  #     - |
+  #       cat <<EOF > /etc/nginx/nginx.conf
+  #       user  nginx;
+  #       worker_processes  5;  ## Default: 1
 
-        events {
-          worker_connections   1000;
-        }
+  #       events {
+  #         worker_connections   1000;
+  #       }
 
-        http {
-          resolver 127.0.0.1;
+  #       http {
+  #         resolver 127.0.0.1;
 
-          server {
-            listen             3100;
+  #         server {
+  #           listen             3100;
 
-            location = / {
-              return 200 'OK';
-              auth_basic off;
-            }
+  #           location = / {
+  #             return 200 'OK';
+  #             auth_basic off;
+  #           }
 
-            location = /api/prom/push {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-            }
+  #           location = /api/prom/push {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #           }
 
-            location = /api/prom/tail {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-              proxy_set_header Upgrade \$$http_upgrade;
-              proxy_set_header Connection "upgrade";
-            }
+  #           location = /api/prom/tail {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #             proxy_set_header Upgrade \$$http_upgrade;
+  #             proxy_set_header Connection "upgrade";
+  #           }
 
-            location ~ /api/prom/.* {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-            }
+  #           location ~ /api/prom/.* {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #           }
 
-            location = /loki/api/v1/push {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-            }
+  #           location = /loki/api/v1/push {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #           }
 
-            location = /loki/api/v1/tail {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-              proxy_set_header Upgrade \$$http_upgrade;
-              proxy_set_header Connection "upgrade";
-            }
+  #           location = /loki/api/v1/tail {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #             proxy_set_header Upgrade \$$http_upgrade;
+  #             proxy_set_header Connection "upgrade";
+  #           }
 
-            location ~ /loki/api/.* {
-              proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-            }
-          }
-        }
-        EOF
-        /docker-entrypoint.sh nginx -g "daemon off;"
-    # ports:
-    #   - "3100:3100"
-    healthcheck:
-      test: ["CMD", "service", "nginx", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # networks:
-    #   - loki
-    network_mode: service:tailscale
+  #           location ~ /loki/api/.* {
+  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
+  #           }
+  #         }
+  #       }
+  #       EOF
+  #       /docker-entrypoint.sh nginx -g "daemon off;"
+  #   # ports:
+  #   #   - "3100:3100"
+  #   healthcheck:
+  #     test: ["CMD", "service", "nginx", "status"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   # networks:
+  #   #   - loki
+  #   network_mode: service:tailscale
 
   flog:
     image: mingrammer/flog
@@ -232,7 +232,7 @@ configs:
         http_listen_port: 3100
 
       memberlist:
-        join_members: ["read", "write", "backend"]
+        join_members: ["backend"]
         dead_node_reclaim_time: 30s
         gossip_to_dead_nodes_time: 15s
         left_ingesters_timeout: 30s
@@ -255,7 +255,7 @@ configs:
         compactor_address: http://metrics.warthog-trout.ts.net:3100
         storage:
           s3:
-            endpoint: minio:9000
+            endpoint: metrics.warthog-trout.ts.net:9000
             insecure: true
             bucketnames: loki-data
             access_key_id: loki
@@ -268,7 +268,6 @@ configs:
         storage:
           s3:
             bucketnames: loki-ruler
-
       compactor:
         working_directory: /tmp/compactor
   alloy-local-config.yaml:
