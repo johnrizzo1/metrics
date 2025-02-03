@@ -3,10 +3,10 @@ services:
   read:
     image: grafana/loki:latest
     command: "-config.file=/etc/loki/config.yaml -target=read"
-    ports:
-      - 3101:3100
-      - 7946
-      - 9095
+    # ports:
+    #   - 3101:3100
+    #   - 7946
+    #   - 9095
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
