@@ -91,7 +91,7 @@ services:
     env_file: stack.env
     depends_on:
       - backend
-      # - gateway
+      - gateway
     entrypoint:
       - sh
       - -euc
@@ -130,81 +130,81 @@ services:
     #   - "3100"
     #   - "7946"
     command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
-    # depends_on:
-    #   - gateway
+    depends_on:
+      - gateway
     # networks:
     #   - loki
     network_mode: service:tailscale
     
-  # gateway:
-  #   image: nginx:latest
-  #   # depends_on:
-  #   #   - read
-  #   #   - write
-  #   entrypoint:
-  #     - sh
-  #     - -euc
-  #     - |
-  #       cat <<EOF > /etc/nginx/nginx.conf
-  #       user  nginx;
-  #       worker_processes  5;  ## Default: 1
+  gateway:
+    image: nginx:latest
+    # depends_on:
+    #   - read
+    #   - write
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        cat <<EOF > /etc/nginx/nginx.conf
+        user  nginx;
+        worker_processes  5;  ## Default: 1
 
-  #       events {
-  #         worker_connections   1000;
-  #       }
+        events {
+          worker_connections   1000;
+        }
 
-  #       http {
-  #         resolver 127.0.0.1;
+        http {
+          resolver 127.0.0.1;
 
-  #         server {
-  #           listen             3100;
+          server {
+            listen             3100;
 
-  #           location = / {
-  #             return 200 'OK';
-  #             auth_basic off;
-  #           }
+            location = / {
+              return 200 'OK';
+              auth_basic off;
+            }
 
-  #           location = /api/prom/push {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #           }
+            location = /api/prom/push {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+            }
 
-  #           location = /api/prom/tail {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #             proxy_set_header Upgrade \$$http_upgrade;
-  #             proxy_set_header Connection "upgrade";
-  #           }
+            location = /api/prom/tail {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+              proxy_set_header Upgrade \$$http_upgrade;
+              proxy_set_header Connection "upgrade";
+            }
 
-  #           location ~ /api/prom/.* {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #           }
+            location ~ /api/prom/.* {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+            }
 
-  #           location = /loki/api/v1/push {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #           }
+            location = /loki/api/v1/push {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+            }
 
-  #           location = /loki/api/v1/tail {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #             proxy_set_header Upgrade \$$http_upgrade;
-  #             proxy_set_header Connection "upgrade";
-  #           }
+            location = /loki/api/v1/tail {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+              proxy_set_header Upgrade \$$http_upgrade;
+              proxy_set_header Connection "upgrade";
+            }
 
-  #           location ~ /loki/api/.* {
-  #             proxy_pass       http://ai.warthog-trout.ts.net:3100\$$request_uri;
-  #           }
-  #         }
-  #       }
-  #       EOF
-  #       /docker-entrypoint.sh nginx -g "daemon off;"
-  #   # ports:
-  #   #   - "3100:3100"
-  #   healthcheck:
-  #     test: ["CMD", "service", "nginx", "status"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   # networks:
-  #   #   - loki
-  #   network_mode: service:tailscale
+            location ~ /loki/api/.* {
+              proxy_pass       http://ai.warthog-trout.ts.net:3200\$$request_uri;
+            }
+          }
+        }
+        EOF
+        /docker-entrypoint.sh nginx -g "daemon off;"
+    # ports:
+    #   - "3100:3100"
+    healthcheck:
+      test: ["CMD", "service", "nginx", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # networks:
+    #   - loki
+    network_mode: service:tailscale
 
   flog:
     image: mingrammer/flog
@@ -231,7 +231,7 @@ configs:
     content: |
       server:
         http_listen_address: 0.0.0.0
-        http_listen_port: 3100
+        http_listen_port: 3200
 
       memberlist:
         join_members: ["metrics.warthog-trout.ts.net"]
