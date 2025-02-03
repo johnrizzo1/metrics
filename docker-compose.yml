@@ -3,10 +3,10 @@ services:
   read:
     image: grafana/loki:latest
     command: "-config.file=/etc/loki/config.yaml -target=read"
-    ports:
-      - 3101:3100
-      - 7946
-      - 9095
+    # ports:
+    #   - 3101:3100
+    #   - 7946
+    #   - 9095
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
@@ -17,19 +17,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks: &loki-dns
-      loki:
-        aliases:
-          - loki
-    # network_mode: service:tailscale
+    # networks: &loki-dns
+    #   loki:
+    #     aliases:
+    #       - loki
+    network_mode: service:tailscale
 
   write:
     image: grafana/loki:latest
     command: "-config.file=/etc/loki/config.yaml -target=write"
-    ports:
-      - 3102:3100
-      - 7946
-      - 9095
+    # ports:
+    #   - 3102:3100
+    #   - 7946
+    #   - 9095
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
@@ -42,9 +42,9 @@ services:
       retries: 5
     depends_on:
       - minio
-    networks:
-      <<: *loki-dns
-    # network_mode: service:tailscale
+    # networks:
+    #   <<: *loki-dns
+    network_mode: service:tailscale
 
   alloy:
     image: grafana/alloy:latest
@@ -54,13 +54,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command:  run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
-    ports:
-      - 12345:12345
+    # ports:
+    #   - 12345:12345
     depends_on:
       - gateway
-    networks:
-      - loki
-    # network_mode: service:tailscale
+    # networks:
+    #   - loki
+    network_mode: service:tailscale
 
   minio:
     image: minio/minio
@@ -72,8 +72,8 @@ services:
         mkdir -p /data/loki-ruler && \
         minio server /data
     env_file: stack.env
-    ports:
-      - 9000
+    # ports:
+    #   - 9000
     volumes:
       - minio:/data
     healthcheck:
@@ -81,9 +81,9 @@ services:
       interval: 15s
       timeout: 20s
       retries: 5
-    networks:
-      - loki
-    # network_mode: service:tailscale
+    # networks:
+    #   - loki
+    network_mode: service:tailscale
 
   grafana:
     image: grafana/grafana:latest
@@ -124,15 +124,15 @@ services:
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
-    ports:
-      - "3100"
-      - "7946"
+    # ports:
+    #   - "3100"
+    #   - "7946"
     command: "-config.file=/etc/loki/config.yaml -target=backend -legacy-read-mode=false"
     depends_on:
       - gateway
-    networks:
-      - loki
-    # network_mode: service:tailscale
+    # networks:
+    #   - loki
+    network_mode: service:tailscale
     
   gateway:
     image: nginx:latest
@@ -193,22 +193,22 @@ services:
         }
         EOF
         /docker-entrypoint.sh nginx -g "daemon off;"
-    ports:
-      - "3100:3100"
+    # ports:
+    #   - "3100:3100"
     healthcheck:
       test: ["CMD", "service", "nginx", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - loki
-    # network_mode: service:tailscale
+    # networks:
+    #   - loki
+    network_mode: service:tailscale
 
   flog:
     image: mingrammer/flog
     command: -f json -d 200ms -l
-    networks:
-      - loki
+    # networks:
+    #   - loki
 
   tailscale:
     image: tailscale/tailscale:latest
@@ -304,8 +304,8 @@ configs:
         external_labels = {}
       }
 
-networks:
-  loki:
+# networks:
+#   loki:
 
 volumes:
   minio:
