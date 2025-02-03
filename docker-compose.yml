@@ -57,7 +57,8 @@ services:
     # ports:
     #   - 12345:12345
     depends_on:
-      - gateway
+      - backend
+      # - gateway
     # networks:
     #   - loki
     network_mode: service:tailscale
@@ -128,8 +129,8 @@ services:
     #   - "3100"
     #   - "7946"
     command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
-    depends_on:
-      - gateway
+    # depends_on:
+    #   - gateway
     # networks:
     #   - loki
     network_mode: service:tailscale
