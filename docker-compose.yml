@@ -1,50 +1,50 @@
 ---
 services:
-  read:
-    image: grafana/loki:latest
-    command: "-config.file=/etc/loki/config.yaml -target=read"
-    # ports:
-    #   - 3101:3100
-    #   - 7946
-    #   - 9095
-    configs:
-      - source: loki-config.yaml
-        target: /etc/loki/config.yaml
-    depends_on:
-      - minio
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # networks: &loki-dns
-    #   loki:
-    #     aliases:
-    #       - loki
-    network_mode: service:tailscale
+  # read:
+  #   image: grafana/loki:latest
+  #   command: "-config.file=/etc/loki/config.yaml -target=read"
+  #   # ports:
+  #   #   - 3101:3100
+  #   #   - 7946
+  #   #   - 9095
+  #   configs:
+  #     - source: loki-config.yaml
+  #       target: /etc/loki/config.yaml
+  #   depends_on:
+  #     - minio
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   # networks: &loki-dns
+  #   #   loki:
+  #   #     aliases:
+  #   #       - loki
+  #   network_mode: service:tailscale
 
-  write:
-    image: grafana/loki:latest
-    command: "-config.file=/etc/loki/config.yaml -target=write"
-    # ports:
-    #   - 3102:3100
-    #   - 7946
-    #   - 9095
-    configs:
-      - source: loki-config.yaml
-        target: /etc/loki/config.yaml
-    # volumes:
-      # - ./loki-config.yaml:/etc/loki/config.yaml
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    depends_on:
-      - minio
-    # networks:
-    #   <<: *loki-dns
-    network_mode: service:tailscale
+  # write:
+  #   image: grafana/loki:latest
+  #   command: "-config.file=/etc/loki/config.yaml -target=write"
+  #   # ports:
+  #   #   - 3102:3100
+  #   #   - 7946
+  #   #   - 9095
+  #   configs:
+  #     - source: loki-config.yaml
+  #       target: /etc/loki/config.yaml
+  #   # volumes:
+  #     # - ./loki-config.yaml:/etc/loki/config.yaml
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   depends_on:
+  #     - minio
+  #   # networks:
+  #   #   <<: *loki-dns
+  #   network_mode: service:tailscale
 
   alloy:
     image: grafana/alloy:latest
@@ -127,7 +127,7 @@ services:
     # ports:
     #   - "3100"
     #   - "7946"
-    command: "-config.file=/etc/loki/config.yaml -target=backend -legacy-read-mode=false"
+    command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
     depends_on:
       - gateway
     # networks:
@@ -136,9 +136,9 @@ services:
     
   gateway:
     image: nginx:latest
-    depends_on:
-      - read
-      - write
+    # depends_on:
+    #   - read
+    #   - write
     entrypoint:
       - sh
       - -euc
@@ -252,7 +252,7 @@ configs:
       common:
         path_prefix: /loki
         replication_factor: 1
-        compactor_address: http://backend:3100
+        compactor_address: http://metrics.warthog-trout.ts.net:3100
         storage:
           s3:
             endpoint: minio:9000
@@ -298,7 +298,7 @@ configs:
 
       loki.write "default" {
         endpoint {
-          url       = "http://gateway:3100/loki/api/v1/push"
+          url       = "http://metrics.warthog-trout.ts.net:3100/loki/api/v1/push"
           tenant_id = "tenant1"
         }
         external_labels = {}
