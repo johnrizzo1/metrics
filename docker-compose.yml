@@ -58,7 +58,7 @@ services:
     #   - 12345:12345
     depends_on:
       - backend
-      # - gateway
+      - gateway
     # networks:
     #   - loki
     network_mode: service:tailscale
@@ -299,7 +299,7 @@ configs:
 
       loki.write "default" {
         endpoint {
-          url       = "http://metrics.warthog-trout.ts.net:3100/loki/api/v1/push"
+          url       = "http://metrics.warthog-trout.ts.net:3200/loki/api/v1/push"
           tenant_id = "tenant1"
         }
         external_labels = {}
