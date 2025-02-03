@@ -23,7 +23,7 @@ services:
       loki:
         aliases:
           - loki
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
 
   write:
     image: grafana/loki:latest
@@ -46,7 +46,7 @@ services:
       - minio
     networks:
       <<: *loki-dns
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
 
   alloy:
     image: grafana/alloy:latest
@@ -54,7 +54,6 @@ services:
       - source: alloy-local-config.yaml
         target: /etc/alloy/config.alloy:ro
     volumes:
-      # - ./alloy-local-config.yaml:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command:  run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     ports:
@@ -63,7 +62,7 @@ services:
       - gateway
     networks:
       - loki
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
 
   minio:
     image: minio/minio
@@ -86,7 +85,7 @@ services:
       retries: 5
     networks:
       - loki
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
 
   grafana:
     image: grafana/grafana:latest
@@ -118,8 +117,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - loki
+    # networks:
+    #   - loki
     network_mode: service:tailscale
 
   backend:
@@ -127,8 +126,6 @@ services:
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
-    # volumes:
-      # - ./loki-config.yaml:/etc/loki/config.yaml
     ports:
       - "3100"
       - "7946"
@@ -137,7 +134,7 @@ services:
       - gateway
     networks:
       - loki
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
     
   gateway:
     image: nginx:latest
@@ -207,7 +204,7 @@ services:
       retries: 5
     networks:
       - loki
-    network_mode: service:tailscale
+    # network_mode: service:tailscale
 
   flog:
     image: mingrammer/flog
