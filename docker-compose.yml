@@ -90,7 +90,8 @@ services:
     image: grafana/grafana:latest
     env_file: stack.env
     depends_on:
-      - gateway
+      - backend
+      # - gateway
     entrypoint:
       - sh
       - -euc
@@ -102,7 +103,7 @@ services:
           - name: Loki
             type: loki
             access: proxy
-            url: http://gateway:3100
+            url: http://metrics.warthog-trout.ts.net:3100
             jsonData:
               httpHeaderName1: "X-Scope-OrgID"
             secureJsonData:
