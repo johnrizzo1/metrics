@@ -23,6 +23,7 @@ services:
       loki:
         aliases:
           - loki
+    network_mode: service:tailscale
 
   write:
     image: grafana/loki:latest
@@ -45,6 +46,7 @@ services:
       - minio
     networks:
       <<: *loki-dns
+    network_mode: service:tailscale
 
   alloy:
     image: grafana/alloy:latest
@@ -61,6 +63,7 @@ services:
       - gateway
     networks:
       - loki
+    network_mode: service:tailscale
 
   minio:
     image: minio/minio
@@ -83,6 +86,7 @@ services:
       retries: 5
     networks:
       - loki
+    network_mode: service:tailscale
 
   grafana:
     image: grafana/grafana:latest
@@ -116,6 +120,7 @@ services:
       retries: 5
     networks:
       - loki
+    network_mode: service:tailscale
 
   backend:
     image: grafana/loki:latest
@@ -132,8 +137,8 @@ services:
       - gateway
     networks:
       - loki
+    network_mode: service:tailscale
     
-
   gateway:
     image: nginx:latest
     depends_on:
@@ -202,13 +207,27 @@ services:
       retries: 5
     networks:
       - loki
-  
+    network_mode: service:tailscale
 
   flog:
     image: mingrammer/flog
     command: -f json -d 200ms -l
     networks:
       - loki
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: metrics-tailscale
+    hostname: metrics.warthog-trout.ts.net
+    restart: unless-stopped
+    # dns:
+    #   - 192.168.2.124
+    volumes:
+      - tailscale:/var/lib/tailscale
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: metrics
+      TS_STATE_DIR: /var/lib/tailscale
 
 configs:
   loki-config.yaml:
@@ -295,3 +314,4 @@ networks:
 
 volumes:
   minio:
+  tailscale:
