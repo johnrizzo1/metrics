@@ -255,7 +255,7 @@ configs:
       #     cert_file: /run/secrets/prometheus.crt
       #     key_file: /run/secrets/prometheus.key
       basic_auth_users:
-        admin: "$y$j9T$JIUj.0VUZVs5LXunR2aVe/$G8ysWQaZZ8Rid8AcHMt1xAsEpbdHyeHkGW41BizAIi5"
+        ${GRAFANA_USERNAME}: "$2b$05$Zy8RNp343KmF9f8kCgdbEevc7Wp7FmosqJkke9Xq.6WCpX.iivvhm"
   grafana-config.yaml:
     content: |
       apiVersion: 1
