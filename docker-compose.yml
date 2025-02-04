@@ -41,6 +41,7 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_PROMETHEUS_AUTH_TYPE=public
       - MINIO_UPDATE=off
+      - MINIO_OPTS="--console-address :9001"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 15s
