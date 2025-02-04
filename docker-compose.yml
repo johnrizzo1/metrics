@@ -141,7 +141,6 @@ configs:
       server:
         http_listen_address: 0.0.0.0
         http_listen_port: 3100
-
       schema_config:
         configs:
           - from: 2023-01-01
@@ -249,6 +248,16 @@ configs:
   grafana-config.yaml:
     content: |
       apiVersion: 1
+      users:
+        allow_sign_up: false
+        auto_assign_org: true
+        auto_assign_org_role: Editor
+      auth:
+        proxy:
+          enabled: true
+          header_name: X-WEBAUTH-USER
+          org_id: tenant1
+          org_role: Editor
       datasources:
         - name: Loki
           type: loki
@@ -260,8 +269,13 @@ configs:
             httpHeaderValue1: "tenant1"
         - name: Prometheus
           type: prometheus
+          access: proxy
           orgId: 1
           url: http://prometheus.warthog-trout.ts.net:9090
+          jsonData:
+            httpHeaderName1: "X-Scope-OrgID"
+          secureJsonData:
+            httpHeaderValue1: "tenant1"
           basicAuth: false
           isDefault: true
           version: 1
