@@ -196,7 +196,7 @@ configs:
         }
         external_labels = {}
       }
-  nginx:
+  nginx_conf:
     content: |
       user  nginx;
       worker_processes  5;  ## Default: 1
