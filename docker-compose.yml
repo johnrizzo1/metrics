@@ -24,6 +24,7 @@ services:
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_HOSTNAME: alloy
       TS_STATE_DIR: /var/lib/tailscale
+
   minio:
     image: minio/minio
     entrypoint:
