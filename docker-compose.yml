@@ -110,7 +110,7 @@ services:
       TS_STATE_DIR: /var/lib/tailscale 
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.53.3
     configs:
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
@@ -252,7 +252,6 @@ configs:
       #     cert_file: /run/secrets/prometheus.crt
       #     key_file: /run/secrets/prometheus.key
       basic_auth_users:
-        admin: $2b$12$q0Zk/gstJ0q3a7fSj9cJ1OWXC2rTh2udJZzCuKn0RinFbFbGJyc2e
   grafana-config.yaml:
     content: |
       apiVersion: 1
