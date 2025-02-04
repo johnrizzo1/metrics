@@ -114,9 +114,12 @@ services:
     configs:
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
+      - source: prometheus_web.yml
+        target: /etc/prometheus/web.yml
     command:
       - --web.enable-remote-write-receiver
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.config.file=/etc/prometheus/web.yml
     ports:
       - "9090:9090"
   ts-prometheus:
@@ -235,8 +238,6 @@ configs:
     content: |
       global:
         scrape_interval: 15s
-      basic_auth_users:
-        admin:$y$j9T$JIUj.0VUZVs5LXunR2aVe/$G8ysWQaZZ8Rid8AcHMt1xAsEpbdHyeHkGW41BizAIi5
       scrape_configs:
         - job_name: 'prometheus'
           scrape_interval: 5s
@@ -247,6 +248,14 @@ configs:
       #     basic_auth:
       #       username: ${GRAFANA_USERNAME}
       #       password: ${GRAFANA_PASSWORD}
+  prometheus_web.yml:
+    content: |
+      # http:
+      #   tls_config:
+      #     cert_file: /run/secrets/prometheus.crt
+      #     key_file: /run/secrets/prometheus.key
+      basic_auth_users:
+        admin:$y$j9T$JIUj.0VUZVs5LXunR2aVe/$G8ysWQaZZ8Rid8AcHMt1xAsEpbdHyeHkGW41BizAIi5
   grafana-config.yaml:
     content: |
       apiVersion: 1
