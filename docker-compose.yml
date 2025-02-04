@@ -110,16 +110,18 @@ services:
       TS_STATE_DIR: /var/lib/tailscale 
 
   prometheus:
-    image: prom/prometheus:v2.47.0
+    image: prom/prometheus
     configs:
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
       - source: prometheus_web.yml
         target: /etc/prometheus/web.yml
     command:
-      - --web.enable-remote-write-receiver
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
       - --web.config.file=/etc/prometheus/web.yml
+    volumes:
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
   ts-prometheus:
@@ -243,11 +245,6 @@ configs:
           scrape_interval: 5s
           static_configs:
           - targets: ['localhost:9090']
-      # remote_write:
-      #   - url: http://prometheus.warthog-trout.ts.net:9090
-      #     basic_auth:
-      #       username: ${GRAFANA_USERNAME}
-      #       password: ${GRAFANA_PASSWORD}
   prometheus_web.yml:
     content: |
       # http:
@@ -296,3 +293,4 @@ volumes:
   ts-alloy:
   alloy_data:
   ts-grafana:
+  prometheus_data:
