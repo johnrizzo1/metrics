@@ -110,7 +110,7 @@ services:
       TS_STATE_DIR: /var/lib/tailscale 
 
   prometheus:
-    image: prom/prometheus:v2.53.3
+    image: prom/prometheus:latest
     configs:
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
