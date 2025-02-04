@@ -128,9 +128,9 @@ services:
       TS_HOSTNAME: prometheus
       TS_STATE_DIR: /var/lib/tailscale
 
-  flog:
-    image: mingrammer/flog
-    command: -f json -d 200ms -l
+  # flog:
+  #   image: mingrammer/flog
+  #   command: -f json -d 200ms -l
 
 configs:
   loki-config.yaml:
