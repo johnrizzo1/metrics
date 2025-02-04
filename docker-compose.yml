@@ -248,6 +248,7 @@ configs:
   prometheus_web.yml:
     content: |
       basic_auth_users:
+        admin: $2b$12$q0Zk/gstJ0q3a7fSj9cJ1OWXC2rTh2udJZzCuKn0RinFbFbGJyc2e
   grafana-config.yaml:
     content: |
       apiVersion: 1
