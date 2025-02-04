@@ -17,6 +17,7 @@ services:
     container_name: ts-alloy
     hostname: alloy.warthog-trout.ts.net
     restart: unless-stopped
+    env_file: stack.env
     volumes:
       - ts-alloy:/var/lib/tailscale
     environment:
@@ -52,6 +53,7 @@ services:
     container_name: ts-minio
     hostname: minio.warthog-trout.ts.net
     restart: unless-stopped
+    env_file: stack.env
     volumes:
       - ts-minio:/var/lib/tailscale
     environment:
@@ -80,6 +82,7 @@ services:
     network_mode: service:ts-grafana
   ts-grafana:
     image: tailscale/tailscale:latest
+    env_file: stack.env
     container_name: ts-grafana
     hostname: grafana.warthog-trout.ts.net
     restart: unless-stopped
@@ -92,6 +95,7 @@ services:
 
   loki:
     image: grafana/loki:latest
+    env_file: stack.env
     configs:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
@@ -102,6 +106,7 @@ services:
     container_name: ts-loki
     hostname: loki.warthog-trout.ts.net
     restart: unless-stopped
+    env_file: stack.env
     volumes:
       - ts-loki:/var/lib/tailscale
     environment:
@@ -111,24 +116,26 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    env_file: stack.env
     configs:
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
-      - source: prometheus_web.yml
-        target: /etc/prometheus/web.yml
+      # - source: prometheus_web.yml
+        # target: /etc/prometheus/web.yml
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
-      - --web.config.file=/etc/prometheus/web.yml
+      # - --web.config.file=/etc/prometheus/web.yml
     volumes:
       - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
+    # ports:
+    #   - "9090:9090"
   ts-prometheus:
     image: tailscale/tailscale:latest
     container_name: ts-prometheus
     hostname: prometheus.warthog-trout.ts.net
     restart: unless-stopped
+    env_file: stack.env
     volumes:
       - ts-prometheus:/var/lib/tailscale
     environment:
@@ -240,15 +247,18 @@ configs:
     content: |
       global:
         scrape_interval: 15s
+        scrape_timeout: 10s
+        evaluation_interval: 15s
       scrape_configs:
-        - job_name: 'prometheus'
-          scrape_interval: 5s
-          static_configs:
-          - targets: ['localhost:9090']
-  prometheus_web.yml:
-    content: |
-      basic_auth_users:
-        admin: $2b$12$q0Zk/gstJ0q3a7fSj9cJ1OWXC2rTh2udJZzCuKn0RinFbFbGJyc2e
+      - job_name: prometheus
+        honor_timestamps: true
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+        - targets:
+          - prometheus.warthog-trout.ts.net:9090
   grafana-config.yaml:
     content: |
       apiVersion: 1
@@ -256,12 +266,6 @@ configs:
         allow_sign_up: false
         auto_assign_org: true
         auto_assign_org_role: Editor
-      auth:
-        proxy:
-          enabled: true
-          header_name: X-WEBAUTH-USER
-          org_id: tenant1
-          org_role: Editor
       datasources:
         - name: Loki
           type: loki
@@ -270,16 +274,13 @@ configs:
           jsonData:
             httpHeaderName1: "X-Scope-OrgID"
           secureJsonData:
-            httpHeaderValue1: "tenant1"
+            httpHeaderValue1: 1
         - name: Prometheus
           type: prometheus
-          access: proxy
-          orgId: tenant1
           url: http://prometheus.warthog-trout.ts.net:9090
-          basicAuth: true
+          access: proxy
           isDefault: true
-          version: 1
-          editable: false
+          editable: true
 
 volumes:
   ts-minio:
