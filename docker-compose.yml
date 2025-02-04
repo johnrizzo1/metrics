@@ -247,10 +247,6 @@ configs:
           - targets: ['localhost:9090']
   prometheus_web.yml:
     content: |
-      # http:
-      #   tls_config:
-      #     cert_file: /run/secrets/prometheus.crt
-      #     key_file: /run/secrets/prometheus.key
       basic_auth_users:
   grafana-config.yaml:
     content: |
