@@ -37,7 +37,6 @@ services:
       timeout: 20s
       retries: 5
     network_mode: service:ts-minio
-
   ts-minio:
     image: tailscale/tailscale:latest
     container_name: ts-minio
@@ -81,16 +80,27 @@ services:
       # retries: 5
     # network_mode: service:ts-grafana
 
-  # backend:
-    # image: grafana/loki:latest
-    # configs:
-      # - source: loki-config.yaml
-        # target: /etc/loki/config.yaml
-    # command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
-    # depends_on:
-      # - gateway
-    # network_mode: service:tailscale
-    
+  loki:
+    image: grafana/loki:latest
+    configs:
+      - source: loki-config.yaml
+        target: /etc/loki/config.yaml
+    command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
+    depends_on:
+      - gateway
+    network_mode: service:ts-loki
+  ts-loki:
+    image: tailscale/tailscale:latest
+    container_name: ts-loki
+    hostname: loki.warthog-trout.ts.net
+    restart: unless-stopped
+    volumes:
+      - ts-loki:/var/lib/tailscale
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: loki
+      TS_STATE_DIR: /var/lib/tailscale 
+
   gateway:
     image: nginx:latest
     configs:
@@ -107,10 +117,6 @@ services:
       retries: 5
     network_mode: service:ts-gateway
 
-  flog:
-    image: mingrammer/flog
-    command: -f json -d 200ms -l
-
   ts-gateway:
     image: tailscale/tailscale:latest
     container_name: ts-gateway
@@ -123,6 +129,10 @@ services:
       TS_HOSTNAME: gateway
       TS_STATE_DIR: /var/lib/tailscale
 
+  flog:
+    image: mingrammer/flog
+    command: -f json -d 200ms -l
+
 configs:
   loki-config.yaml:
     content: |
@@ -130,14 +140,14 @@ configs:
         http_listen_address: 0.0.0.0
         http_listen_port: 3200
 
-      memberlist:
-        join_members: ["metrics.warthog-trout.ts.net"]
-        dead_node_reclaim_time: 30s
-        gossip_to_dead_nodes_time: 15s
-        left_ingesters_timeout: 30s
-        bind_addr: ['0.0.0.0']
-        bind_port: 7946
-        gossip_interval: 2s
+      # memberlist:
+      #   join_members: ["metrics.warthog-trout.ts.net"]
+      #   dead_node_reclaim_time: 30s
+      #   gossip_to_dead_nodes_time: 15s
+      #   left_ingesters_timeout: 30s
+      #   bind_addr: ['0.0.0.0']
+      #   bind_port: 7946
+      #   gossip_interval: 2s
 
       schema_config:
         configs:
@@ -151,18 +161,18 @@ configs:
       common:
         path_prefix: /loki
         replication_factor: 1
-        compactor_address: http://metrics.warthog-trout.ts.net:3100
+        # compactor_address: http://metrics.warthog-trout.ts.net:3100
         storage:
           s3:
-            endpoint: metrics.warthog-trout.ts.net:9000
+            endpoint: minio.warthog-trout.ts.net:9000
             insecure: true
             bucketnames: loki-data
-            access_key_id: loki
-            secret_access_key: supersecret
+            access_key_id: ${MINIO_ROOT_USER}
+            secret_access_key: ${MINIO_ROOT_PASSWORD}
             s3forcepathstyle: true
         ring:
           kvstore:
-            store: memberlist
+            store: inmemory
       ruler:
         storage:
           s3:
