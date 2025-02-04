@@ -96,8 +96,6 @@ services:
       - source: loki-config.yaml
         target: /etc/loki/config.yaml
     command: "-config.file=/etc/loki/config.yaml -target=all -legacy-read-mode=false"
-    depends_on:
-      - gateway
     network_mode: service:ts-loki
   ts-loki:
     image: tailscale/tailscale:latest
