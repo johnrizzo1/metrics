@@ -266,3 +266,5 @@ volumes:
   minio_data:
 
   ts-gateway:
+
+  ts-loki:
