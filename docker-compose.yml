@@ -203,23 +203,23 @@ configs:
   grafana-config.yaml:
     content: |
       apiVersion: 1
-        datasources:
-          - name: Loki
-            type: loki
-            access: proxy
-            url: http://loki.warthog-trout.ts.net:3100
-            jsonData:
-              httpHeaderName1: "X-Scope-OrgID"
-            secureJsonData:
-              httpHeaderValue1: "tenant1"
-          - name: Prometheus
-            type: prometheus
-            orgId: 1
-            url: http://prometheus.warthog-trout.ts.net:9090
-            basicAuth: false
-            isDefault: true
-            version: 1
-            editable: false
+      datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki.warthog-trout.ts.net:3100
+          jsonData:
+            httpHeaderName1: "X-Scope-OrgID"
+          secureJsonData:
+            httpHeaderValue1: "tenant1"
+        - name: Prometheus
+          type: prometheus
+          orgId: 1
+          url: http://prometheus.warthog-trout.ts.net:9090
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
 
 volumes:
   ts-minio:
