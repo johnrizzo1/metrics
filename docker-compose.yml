@@ -88,60 +88,13 @@ services:
     
   gateway:
     image: nginx:latest
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/nginx.conf
     entrypoint:
       - sh
       - -euc
-      - |
-        cat <<EOF > /etc/nginx/nginx.conf
-        user  nginx;
-        worker_processes  5;  ## Default: 1
-
-        events {
-          worker_connections   1000;
-        }
-
-        http {
-          resolver 127.0.0.1;
-
-          server {
-            listen             3100;
-
-            location = / {
-              return 200 'OK';
-              auth_basic off;
-            }
-
-            location = /api/prom/push {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            }
-
-            location = /api/prom/tail {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-              proxy_set_header Upgrade \$$http_upgrade;
-              proxy_set_header Connection "upgrade";
-            }
-
-            location ~ /api/prom/.* {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            }
-
-            location = /loki/api/v1/push {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            }
-
-            location = /loki/api/v1/tail {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-              proxy_set_header Upgrade \$$http_upgrade;
-              proxy_set_header Connection "upgrade";
-            }
-
-            location ~ /loki/api/.* {
-              proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            }
-          }
-        }
-        EOF
-        /docker-entrypoint.sh nginx -g "daemon off;"
+      - /docker-entrypoint.sh nginx -g "daemon off;"
     healthcheck:
       test: ["CMD", "service", "nginx", "status"]
       interval: 10s
@@ -158,8 +111,6 @@ services:
     container_name: ts-gateway
     hostname: gateway.warthog-trout.ts.net
     restart: unless-stopped
-    # dns:
-    #   - 192.168.2.124
     volumes:
       - ts-gateway:/var/lib/tailscale
     environment:
@@ -244,6 +195,55 @@ configs:
           tenant_id = "tenant1"
         }
         external_labels = {}
+      }
+  nginx:
+    content: |
+      user  nginx;
+      worker_processes  5;  ## Default: 1
+
+      events {
+        worker_connections   1000;
+      }
+
+      http {
+        resolver 127.0.0.1;
+
+        server {
+          listen             3100;
+
+          location = / {
+            return 200 'OK';
+            auth_basic off;
+          }
+
+          location = /api/prom/push {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+          }
+
+          location = /api/prom/tail {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+            proxy_set_header Upgrade \$$http_upgrade;
+            proxy_set_header Connection "upgrade";
+          }
+
+          location ~ /api/prom/.* {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+          }
+
+          location = /loki/api/v1/push {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+          }
+
+          location = /loki/api/v1/tail {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+            proxy_set_header Upgrade \$$http_upgrade;
+            proxy_set_header Connection "upgrade";
+          }
+
+          location ~ /loki/api/.* {
+            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
+          }
+        }
       }
 
 volumes:
