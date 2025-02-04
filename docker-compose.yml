@@ -4,14 +4,13 @@ services:
     image: grafana/alloy:latest
     configs:
       - source: alloy-local-config.yaml
-        target: /etc/alloy/config.alloy:ro
+        target: /etc/alloy/config.alloy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - alloy_data:/var/lib/alloy/data
     command:  run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     depends_on:
       - loki
-      - gateway
     network_mode: service:ts-alloy
   ts-alloy:
     image: tailscale/tailscale:latest
@@ -60,36 +59,36 @@ services:
       TS_HOSTNAME: minio
       TS_STATE_DIR: /var/lib/tailscale
 
-  # grafana:
-    # image: grafana/grafana:latest
-    # env_file: stack.env
-    # depends_on:
-      # - backend
-      # - gateway
-    # entrypoint:
-      # - sh
-      # - -euc
-      # - |
-        # mkdir -p /etc/grafana/provisioning/datasources
-        # cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
-        # apiVersion: 1
-        # datasources:
-          # - name: Loki
-            # type: loki
-            # access: proxy
-            # url: http://metrics.warthog-trout.ts.net:3100
-            # jsonData:
-              # httpHeaderName1: "X-Scope-OrgID"
-            # secureJsonData:
-              # httpHeaderValue1: "tenant1"
-        # EOF
-        # /run.sh
-    # healthcheck:
-      # test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
-      # interval: 10s
-      # timeout: 5s
-      # retries: 5
-    # network_mode: service:ts-grafana
+  grafana:
+    image: grafana/grafana:latest
+    env_file: stack.env
+    depends_on:
+      - loki
+      - prometheus
+    configs:
+      - source: grafana-config.yaml
+        target: /etc/grafana/provisioning/datasources/ds.yaml
+    entrypoint:
+      - sh
+      - -euc
+      - /run.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    network_mode: service:ts-grafana
+  ts-grafana:
+    image: tailscale/tailscale:latest
+    container_name: ts-grafana
+    hostname: grafana.warthog-trout.ts.net
+    restart: unless-stopped
+    volumes:
+      - ts-grafana:/var/lib/tailscale
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: grafana
+      TS_STATE_DIR: /var/lib/tailscale
 
   loki:
     image: grafana/loki:latest
@@ -112,32 +111,23 @@ services:
       TS_HOSTNAME: loki
       TS_STATE_DIR: /var/lib/tailscale 
 
-  gateway:
-    image: nginx:latest
-    configs:
-      - source: nginx_conf
-        target: /etc/nginx/nginx.conf
-    entrypoint:
-      - sh
-      - -euc
-      - /docker-entrypoint.sh nginx -g "daemon off;"
-    healthcheck:
-      test: ["CMD", "service", "nginx", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    network_mode: service:ts-gateway
-
-  ts-gateway:
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    command:
+      - --web.enable-remote-write-receiver
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  ts-prometheus:
     image: tailscale/tailscale:latest
-    container_name: ts-gateway
-    hostname: gateway.warthog-trout.ts.net
+    container_name: ts-prometheus
+    hostname: prometheus.warthog-trout.ts.net
     restart: unless-stopped
     volumes:
-      - ts-gateway:/var/lib/tailscale
+      - ts-prometheus:/var/lib/tailscale
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY}
-      TS_HOSTNAME: gateway
+      TS_HOSTNAME: prometheus
       TS_STATE_DIR: /var/lib/tailscale
 
   flog:
@@ -149,7 +139,7 @@ configs:
     content: |
       server:
         http_listen_address: 0.0.0.0
-        http_listen_port: 3200
+        http_listen_port: 3100
 
       schema_config:
         configs:
@@ -207,68 +197,37 @@ configs:
 
       loki.write "default" {
         endpoint {
-          url       = "http://loki.warthog-trout.ts.net:3200/loki/api/v1/push"
+          url       = "http://loki.warthog-trout.ts.net:3100/loki/api/v1/push"
           tenant_id = "tenant1"
         }
         external_labels = {}
       }
-  nginx_conf:
+  grafana-config.yaml:
     content: |
-      user  nginx;
-      worker_processes  5;  ## Default: 1
-
-      events {
-        worker_connections   1000;
-      }
-
-      http {
-        resolver 127.0.0.1;
-
-        server {
-          listen             3100;
-
-          location = / {
-            return 200 'OK';
-            auth_basic off;
-          }
-
-          location = /api/prom/push {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-          }
-
-          location = /api/prom/tail {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            proxy_set_header Upgrade \$$http_upgrade;
-            proxy_set_header Connection "upgrade";
-          }
-
-          location ~ /api/prom/.* {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-          }
-
-          location = /loki/api/v1/push {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-          }
-
-          location = /loki/api/v1/tail {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-            proxy_set_header Upgrade \$$http_upgrade;
-            proxy_set_header Connection "upgrade";
-          }
-
-          location ~ /loki/api/.* {
-            proxy_pass       http://loki.warthog-trout.ts.net:3200\$$request_uri;
-          }
-        }
-      }
+      apiVersion: 1
+        datasources:
+          - name: Loki
+            type: loki
+            access: proxy
+            url: http://loki.warthog-trout.ts.net:3100
+            jsonData:
+              httpHeaderName1: "X-Scope-OrgID"
+            secureJsonData:
+              httpHeaderValue1: "tenant1"
+          - name: Prometheus
+            type: prometheus
+            orgId: 1
+            url: http://prometheus.warthog-trout.ts.net:9090
+            basicAuth: false
+            isDefault: true
+            version: 1
+            editable: false
 
 volumes:
   ts-minio:
   minio_data:
-
-  ts-gateway:
-
+  ts-prometheus:
   ts-loki:
-
   ts-alloy:
   alloy_data:
+  ts-grafana:
